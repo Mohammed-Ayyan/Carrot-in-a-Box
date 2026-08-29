@@ -111,6 +111,7 @@ export const KEYS = {
   matchmakingQueue: 'matchmaking:queue',
   playerSession: (playerId: string) => `session:${playerId}`,
   activeRoom: (roomId: string) => `room:${roomId}`,
+  roomCode: (code: string) => `roomcode:${code}`,
   playerRoom: (playerId: string) => `player:room:${playerId}`,
   rateLimitChat: (playerId: string) => `ratelimit:chat:${playerId}`,
 } as const;
