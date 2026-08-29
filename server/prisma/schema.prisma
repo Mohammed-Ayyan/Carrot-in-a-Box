@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  playerId  String   @unique
+  nickname  String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  player    Player?
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  nickname  String
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  gamesAsP1 Game[]   @relation("Player1Games")
+  gamesAsP2 Game[]   @relation("Player2Games")
+  wonGames  Game[]   @relation("WinnerGames")
+}
+
+model Game {
+  id             String    @id @default(uuid())
+  roomId         String    @unique
+  player1Id      String
+  player2Id      String
+  winnerId       String?
+  carrotOwner    String?   // "PLAYER_1" or "PLAYER_2"
+  rounds         Int       @default(0)
+  status         String    @default("COMPLETED")
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+  player1        Player    @relation("Player1Games", fields: [player1Id], references: [id])
+  player2        Player    @relation("Player2Games", fields: [player2Id], references: [id])
+  winner         Player?   @relation("WinnerGames", fields: [winnerId], references: [id])
+}
