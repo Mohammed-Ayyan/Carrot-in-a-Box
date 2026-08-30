@@ -20,15 +20,15 @@ class CrazyGamesService {
         const rawSdk = window.CrazyGames.SDK;
         const env = rawSdk.environment;
 
-        // The SDK environment will be 'local' (localhost), 'crazygames' (on CrazyGames domains),
-        // or 'disabled' (on normal domains such as Vercel).
-        if (env === 'local' || env === 'crazygames') {
+        // The SDK environment will be 'local', 'crazygames', or 'disabled' on normal domains (such as Vercel).
+        // If SDK is present and environment is NOT 'disabled', initialize the SDK!
+        if (env !== 'disabled') {
           this.sdk = rawSdk;
           if (typeof this.sdk.init === 'function') {
             await this.sdk.init();
           }
           this.isInitialized = true;
-          console.log(`[CrazyGames] SDK v3 initialized successfully (environment: "${env}")`);
+          console.log(`[CrazyGames] SDK v3 initialized successfully (environment: "${env || 'active'}")`);
 
           // Fetch username if available
           if (this.sdk.user?.getUsername) {

@@ -16,18 +16,18 @@ export const GirlCharacterModel: React.FC<GirlCharacterModelProps> = ({
 }) => {
   try {
     // 1. Load OBJ Geometry
-    const obj = useLoader(OBJLoader, '/girl.obj');
+    const obj = useLoader(OBJLoader, './girl.obj');
 
     // 2. Load Textures with sRGB Encoding for Vibrant Color
     const [topColorMap, topNormalMap, botColorMap, bodySkinMap, faceMap, colorsMap] = useLoader(
       THREE.TextureLoader,
       [
-        '/tEXTURE/top color.png',
-        '/tEXTURE/top normal.png',
-        '/tEXTURE/bot color.jpg',
-        '/tEXTURE/BOdy Skin Base Color.png',
-        '/tEXTURE/FACE Base Color apha.png',
-        '/tEXTURE/COLORS.jpg',
+        './tEXTURE/top color.png',
+        './tEXTURE/top normal.png',
+        './tEXTURE/bot color.jpg',
+        './tEXTURE/BOdy Skin Base Color.png',
+        './tEXTURE/FACE Base Color apha.png',
+        './tEXTURE/COLORS.jpg',
       ]
     );
 

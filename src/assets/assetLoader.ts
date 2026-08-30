@@ -1,11 +1,11 @@
 // Asset registry mapping generated 3D GLB assets in public/generated-assets/
 
 export const GENERATED_ASSETS = {
-  ROOM_FULL: '/generated-assets/room.glb',
-  ROOM_PARTS: '/generated-assets/room_parts.glb',
-  ROOM_PARTS_TEXTURED: '/generated-assets/cozy_stylized_room_3d_model_Clone1__1_.glb.glb',
-  COZY_MODEL_1: '/generated-assets/cozy_stylized_room_3d_model_Clone1.glb',
-  COZY_MODEL_2: '/generated-assets/cozy_stylized_room_3d_model_Clone1__1_.glb',
+  ROOM_FULL: './generated-assets/room.glb',
+  ROOM_PARTS: './generated-assets/room_parts.glb',
+  ROOM_PARTS_TEXTURED: './generated-assets/cozy_stylized_room_3d_model_Clone1__1_.glb.glb',
+  COZY_MODEL_1: './generated-assets/cozy_stylized_room_3d_model_Clone1.glb',
+  COZY_MODEL_2: './generated-assets/cozy_stylized_room_3d_model_Clone1__1_.glb',
 };
 
 // Logical mapping of GLB mesh node names to scene roles
