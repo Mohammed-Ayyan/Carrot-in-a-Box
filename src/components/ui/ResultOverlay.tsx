@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RotateCcw, XCircle, Clock, LogOut } from 'lucide-react';
 import { GameStateData } from '../../game/types';
 import { audioManager } from '../../audio/audioManager';
+import { platformService } from '../../platform/PlatformService';
 
 interface ResultOverlayProps {
   gameState: GameStateData;
@@ -45,6 +46,16 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
     }
   }
 
+  const handlePlayAgainClick = async () => {
+    if (requested) return;
+    setRequested(true);
+    audioManager.playClick();
+    if (platformService.isAvailable()) {
+      await platformService.requestAd('midgame');
+    }
+    onPlayAgain();
+  };
+
   return (
     <div className="result-overlay">
       <div className={`result-card ${isPlayerWin ? 'card-win' : 'card-empty'}`}>
@@ -67,12 +78,7 @@ export const ResultOverlay: React.FC<ResultOverlayProps> = ({
             className="play-again-button"
             disabled={requested}
             style={{ opacity: requested ? 0.7 : 1, cursor: requested ? 'not-allowed' : 'pointer' }}
-            onClick={() => {
-              if (requested) return;
-              setRequested(true);
-              audioManager.playClick();
-              onPlayAgain();
-            }}
+            onClick={handlePlayAgainClick}
           >
             {requested ? <Clock size={20} /> : <RotateCcw size={20} />}
             <span>{requested ? 'WAITING FOR OPPONENT...' : 'PLAY AGAIN'}</span>

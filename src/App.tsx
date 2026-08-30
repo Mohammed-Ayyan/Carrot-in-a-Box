@@ -41,7 +41,9 @@ export const App: React.FC = () => {
   }, [activeEngine]);
 
   useEffect(() => {
+    platformService.loadingStart();
     platformService.init().then(() => {
+      platformService.loadingStop();
       // 1. Instant Multiplayer launch
       if (platformService.isInstantMultiplayer() && MULTIPLAYER) {
         handleCreateRoom(platformService.getUsername() || 'Player');
@@ -54,6 +56,7 @@ export const App: React.FC = () => {
         handleJoinRoom(platformService.getUsername() || 'Player', inviteCode);
       }
     }).catch((err) => {
+      platformService.loadingStop();
       console.warn('[App] Platform initialization completed with error fallback:', err);
     });
 
@@ -68,6 +71,21 @@ export const App: React.FC = () => {
     return () => {
       unsubJoin();
     };
+  }, []);
+
+  // Prevent default scroll behavior for game control keys inside CrazyGames iframe
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (!isInput) {
+          e.preventDefault();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown, false);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, false);
   }, []);
 
   // Update CrazyGames Room Status (updateRoom API)

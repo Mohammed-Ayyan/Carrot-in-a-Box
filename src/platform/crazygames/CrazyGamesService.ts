@@ -1,4 +1,5 @@
 import { CrazyGamesSDK, CrazyGamesSettings } from './CrazyGamesTypes';
+import { audioManager } from '../../audio/audioManager';
 
 class CrazyGamesService {
   private sdk: CrazyGamesSDK | null = null;
@@ -37,11 +38,17 @@ class CrazyGamesService {
           // Initialize settings & listen for live changes
           if (this.sdk.game?.getSettings) {
             this.currentSettings = { ...this.currentSettings, ...this.sdk.game.getSettings() };
+            if (typeof this.currentSettings.muteAudio === 'boolean') {
+              audioManager.setMuted(this.currentSettings.muteAudio);
+            }
           }
 
           if (this.sdk.game?.onSettingsChange) {
             this.sdk.game.onSettingsChange((newSettings) => {
               this.currentSettings = { ...this.currentSettings, ...newSettings };
+              if (typeof newSettings.muteAudio === 'boolean') {
+                audioManager.setMuted(newSettings.muteAudio);
+              }
               this.notifySettings();
             });
           }
@@ -192,21 +199,27 @@ class CrazyGamesService {
 
   public async requestAd(adType: 'midgame' | 'rewarded' = 'midgame'): Promise<void> {
     if (!this.isAvailable() || !this.sdk?.ad?.requestAd) return;
+    const wasMuted = audioManager.isMuted();
+    audioManager.setMuted(true);
+
     return new Promise((resolve) => {
       try {
         this.sdk!.ad!.requestAd(adType, {
           adStarted: () => console.log(`[CrazyGames] ${adType} ad started`),
           adFinished: () => {
             console.log(`[CrazyGames] ${adType} ad finished`);
+            audioManager.setMuted(wasMuted);
             resolve();
           },
           adError: (error) => {
             console.warn(`[CrazyGames] ${adType} ad error:`, error);
+            audioManager.setMuted(wasMuted);
             resolve();
           },
         });
       } catch (err) {
         console.warn(`[CrazyGames] ${adType} ad exception:`, err);
+        audioManager.setMuted(wasMuted);
         resolve();
       }
     });
