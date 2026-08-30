@@ -146,10 +146,6 @@ export const App: React.FC = () => {
 
   // Mode 2: PLAY ONLINE
   const handlePlayOnline = async (nickname: string) => {
-    if (!MULTIPLAYER) {
-      handlePlayVsBot(nickname);
-      return;
-    }
     setErrorMessage(null);
     setConnecting(true);
     currentNicknameRef.current = nickname;
@@ -160,9 +156,9 @@ export const App: React.FC = () => {
       startSearchTimer();
       setConnecting(false);
     } catch (err) {
-      console.warn('[App] Server connection failed, starting bot game:', err);
+      console.error('[App] Unable to connect to online matchmaking:', err);
       setConnecting(false);
-      handlePlayVsBot(nickname);
+      setErrorMessage('Unable to connect to online matchmaking. Please try again.');
     }
   };
 

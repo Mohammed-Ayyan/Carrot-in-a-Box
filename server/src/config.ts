@@ -3,10 +3,15 @@ export function getCorsOrigins(): string[] | boolean {
     return process.env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean);
   }
   if (process.env.FRONTEND_URL) {
-    return [process.env.FRONTEND_URL.trim()];
+    return process.env.FRONTEND_URL.split(',').map((s) => s.trim()).filter(Boolean);
   }
   if (process.env.NODE_ENV === 'production') {
-    return ['http://localhost:5173'];
+    return [
+      'https://carrot-in-a-box.vercel.app',
+      'https://carrot-in-a-box-multplayer.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ];
   }
   return true;
 }

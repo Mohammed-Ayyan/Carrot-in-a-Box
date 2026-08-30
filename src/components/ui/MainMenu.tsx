@@ -120,8 +120,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
         )}
 
-        {/* Error Message */}
-        {errorMessage && <p className="menu-error">{errorMessage}</p>}
+        {/* Error Message & Retry */}
+        {errorMessage && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: 12, padding: '10px 14px', marginBottom: 12, textAlign: 'center', width: '100%'
+          }}>
+            <p className="menu-error" style={{ margin: '0 0 8px 0', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+              {errorMessage}
+            </p>
+            <button
+              className="play-button"
+              style={{ background: '#2563eb', color: '#ffffff', padding: '6px 14px', fontSize: 12, margin: '0 auto' }}
+              onClick={() => {
+                audioManager.playClick();
+                onPlayOnline(nickname.trim() || 'Player');
+              }}
+            >
+              <RefreshCw size={14} />
+              <span>RETRY ONLINE MATCHMAKING</span>
+            </button>
+          </div>
+        )}
 
         {/* --- VIEW 1: SEARCHING FOR ONLINE OPPONENT --- */}
         {isSearching && !showBotFallbackPrompt && (
