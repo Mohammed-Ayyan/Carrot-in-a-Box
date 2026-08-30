@@ -16,10 +16,19 @@ export const config = {
   host: process.env.HOST || '0.0.0.0',
   nodeEnv: process.env.NODE_ENV || 'development',
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/carrot_in_a_box',
+    url:
+      process.env.DATABASE_URL ||
+      process.env.DATABASE_PRIVATE_URL ||
+      process.env.DATABASE_PUBLIC_URL ||
+      process.env.POSTGRES_URL ||
+      'postgresql://postgres:postgres@localhost:5432/carrot_in_a_box',
   },
   redis: {
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    url:
+      process.env.REDIS_URL ||
+      process.env.REDIS_PRIVATE_URL ||
+      process.env.REDIS_PUBLIC_URL ||
+      'redis://localhost:6379',
   },
   session: {
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',

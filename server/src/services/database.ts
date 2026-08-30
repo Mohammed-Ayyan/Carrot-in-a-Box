@@ -1,8 +1,13 @@
 import { PrismaClient } from '@prisma/client';
+import { config } from '../config';
 
 let prisma: PrismaClient | null = null;
 let useMemoryDb = false;
 const inMemorySessions = new Map<string, any>();
+
+export function isUsingMemoryDb(): boolean {
+  return useMemoryDb;
+}
 
 export function getDb(): any {
   if (useMemoryDb) {
@@ -38,19 +43,31 @@ export function getDb(): any {
 
   if (!prisma) {
     prisma = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+      datasources: {
+        db: {
+          url: config.database.url,
+        },
+      },
+      log: config.nodeEnv === 'development' ? ['warn', 'error'] : ['error'],
     });
   }
   return prisma;
 }
 
 export async function connectDatabase(): Promise<void> {
+  const isProd = config.nodeEnv === 'production';
+
   try {
     const db = getDb();
     await db.$connect();
     console.log('[Database] Connected to PostgreSQL');
-  } catch (err) {
-    console.warn('[Database] PostgreSQL not running — using in-memory session store.');
+  } catch (err: any) {
+    const errorMsg = err?.message || String(err);
+    if (isProd) {
+      console.error(`[Database] PostgreSQL connection failed: ${errorMsg}`);
+      process.exit(1);
+    }
+    console.warn(`[Database] PostgreSQL not running — using in-memory session store. Reason: ${errorMsg}`);
     useMemoryDb = true;
   }
 }

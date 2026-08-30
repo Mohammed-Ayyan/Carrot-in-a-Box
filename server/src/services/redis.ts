@@ -4,6 +4,10 @@ import { config } from '../config';
 let redis: Redis | null = null;
 let useMemoryRedis = false;
 
+export function isUsingMemoryRedis(): boolean {
+  return useMemoryRedis;
+}
+
 // In-memory data structures
 const memoryStore = new Map<string, string>();
 const memoryHash = new Map<string, Map<string, string>>();
@@ -12,6 +16,7 @@ const memoryZSet = new Map<string, Map<string, number>>();
 export function getRedis(): any {
   if (useMemoryRedis) {
     return {
+      ping: async () => 'PONG',
       setex: async (key: string, secs: number, val: string) => {
         memoryStore.set(key, val);
       },
@@ -89,12 +94,18 @@ export function getRedis(): any {
 }
 
 export async function connectRedis(): Promise<void> {
+  const isProd = config.nodeEnv === 'production';
   try {
     const r = getRedis();
     await r.connect();
     console.log('[Redis] Connected to Redis server');
-  } catch (err) {
-    console.warn('[Redis] Redis server not running — using in-memory store.');
+  } catch (err: any) {
+    const errorMsg = err?.message || String(err);
+    if (isProd) {
+      console.error(`[Redis] Redis connection failed: ${errorMsg}`);
+      process.exit(1);
+    }
+    console.warn(`[Redis] Redis server not running — using in-memory store. Reason: ${errorMsg}`);
     useMemoryRedis = true;
   }
 }
