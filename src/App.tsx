@@ -53,6 +53,8 @@ export const App: React.FC = () => {
       if (inviteCode && MULTIPLAYER) {
         handleJoinRoom(platformService.getUsername() || 'Player', inviteCode);
       }
+    }).catch((err) => {
+      console.warn('[App] Platform initialization completed with error fallback:', err);
     });
 
     // 3. Register live CrazyGames Room Join Listener

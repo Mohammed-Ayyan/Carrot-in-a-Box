@@ -8,6 +8,10 @@ class PlatformService {
     await crazyGamesService.init();
   }
 
+  public isAvailable(): boolean {
+    return crazyGamesService.isAvailable();
+  }
+
   public isCrazyGames(): boolean {
     return crazyGamesService.isCrazyGames();
   }
@@ -44,6 +48,18 @@ class PlatformService {
     crazyGamesService.gameplayStop();
   }
 
+  public loadingStart(): void {
+    crazyGamesService.loadingStart();
+  }
+
+  public loadingStop(): void {
+    crazyGamesService.loadingStop();
+  }
+
+  public requestAd(adType: 'midgame' | 'rewarded' = 'midgame'): Promise<void> {
+    return crazyGamesService.requestAd(adType);
+  }
+
   public getSettings(): PlatformSettings {
     return crazyGamesService.getSettings();
   }
@@ -54,3 +70,4 @@ class PlatformService {
 }
 
 export const platformService = new PlatformService();
+export const crazyGames = platformService;

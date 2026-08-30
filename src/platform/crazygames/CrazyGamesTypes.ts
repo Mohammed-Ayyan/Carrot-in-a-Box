@@ -17,7 +17,14 @@ export interface CrazyGamesSettings {
   disableChat: boolean;
 }
 
+export interface CrazyGamesAdCallbacks {
+  adStarted?: () => void;
+  adFinished?: () => void;
+  adError?: (error: any) => void;
+}
+
 export interface CrazyGamesSDK {
+  environment?: 'local' | 'crazygames' | 'disabled' | string;
   init?: () => Promise<void>;
   user?: {
     isUserLoggedIn: () => Promise<boolean>;
@@ -27,6 +34,8 @@ export interface CrazyGamesSDK {
   game?: {
     gameplayStart: () => void;
     gameplayStop: () => void;
+    loadingStart?: () => void;
+    loadingStop?: () => void;
     updateRoom: (options: CrazyGamesRoomOptions) => void;
     inviteLink: (params: Record<string, string>) => string;
     showInviteButton: (params: Record<string, string>) => void;
@@ -34,6 +43,10 @@ export interface CrazyGamesSDK {
     onRoomJoin: (callback: (data: { roomId?: string; roomCode?: string }) => void) => () => void;
     onSettingsChange: (callback: (settings: Partial<CrazyGamesSettings>) => void) => () => void;
     getSettings: () => CrazyGamesSettings;
+  };
+  ad?: {
+    requestAd: (type: 'midgame' | 'rewarded', callbacks: CrazyGamesAdCallbacks) => void;
+    hasAdblock?: () => Promise<boolean>;
   };
   data?: {
     getInviteParam: (key: string) => string | null;

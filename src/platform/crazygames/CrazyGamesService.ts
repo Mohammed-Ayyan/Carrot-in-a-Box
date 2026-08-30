@@ -16,50 +16,69 @@ class CrazyGamesService {
 
     try {
       if (typeof window !== 'undefined' && window.CrazyGames?.SDK) {
-        this.sdk = window.CrazyGames.SDK;
-        if (this.sdk.init) {
-          await this.sdk.init();
-        }
-        this.isInitialized = true;
-        console.log('[CrazyGames] SDK v3 initialized successfully');
+        const rawSdk = window.CrazyGames.SDK;
+        const env = rawSdk.environment;
 
-        // Fetch username if available
-        if (this.sdk.user?.getUsername) {
-          this.username = await this.sdk.user.getUsername().catch(() => null);
-        }
+        // The SDK environment will be 'local' (localhost), 'crazygames' (on CrazyGames domains),
+        // or 'disabled' (on normal domains such as Vercel).
+        if (env === 'local' || env === 'crazygames') {
+          this.sdk = rawSdk;
+          if (typeof this.sdk.init === 'function') {
+            await this.sdk.init();
+          }
+          this.isInitialized = true;
+          console.log(`[CrazyGames] SDK v3 initialized successfully (environment: "${env}")`);
 
-        // Initialize settings & listen for live changes
-        if (this.sdk.game?.getSettings) {
-          this.currentSettings = { ...this.currentSettings, ...this.sdk.game.getSettings() };
-        }
+          // Fetch username if available
+          if (this.sdk.user?.getUsername) {
+            this.username = await this.sdk.user.getUsername().catch(() => null);
+          }
 
-        if (this.sdk.game?.onSettingsChange) {
-          this.sdk.game.onSettingsChange((newSettings) => {
-            this.currentSettings = { ...this.currentSettings, ...newSettings };
-            this.notifySettings();
-          });
-        }
+          // Initialize settings & listen for live changes
+          if (this.sdk.game?.getSettings) {
+            this.currentSettings = { ...this.currentSettings, ...this.sdk.game.getSettings() };
+          }
 
-        // Listen for live room join events when invited while in-game
-        if (this.sdk.game?.onRoomJoin) {
-          this.sdk.game.onRoomJoin((data) => {
-            const targetCode = data.roomCode || data.roomId;
-            if (targetCode) {
-              console.log('[CrazyGames] Live room join event received:', targetCode);
-              this.roomJoinListeners.forEach((fn) => fn(targetCode));
-            }
-          });
+          if (this.sdk.game?.onSettingsChange) {
+            this.sdk.game.onSettingsChange((newSettings) => {
+              this.currentSettings = { ...this.currentSettings, ...newSettings };
+              this.notifySettings();
+            });
+          }
+
+          // Listen for live room join events when invited while in-game
+          if (this.sdk.game?.onRoomJoin) {
+            this.sdk.game.onRoomJoin((data) => {
+              const targetCode = data.roomCode || data.roomId;
+              if (targetCode) {
+                console.log('[CrazyGames] Live room join event received:', targetCode);
+                this.roomJoinListeners.forEach((fn) => fn(targetCode));
+              }
+            });
+          }
+        } else {
+          console.log(`[CrazyGames] SDK environment is "${env || 'disabled'}" — skipping SDK initialization for standard web deployment.`);
+          this.sdk = null;
+          this.isInitialized = true;
         }
       } else {
-        console.log('[CrazyGames] Running in standalone web mode (SDK unavailable)');
+        console.log('[CrazyGames] Running in standalone web mode (SDK script unavailable)');
+        this.sdk = null;
+        this.isInitialized = true;
       }
     } catch (err) {
-      console.warn('[CrazyGames] Failed to initialize SDK:', err);
+      console.warn('[CrazyGames] SDK initialization failed or was disabled:', err);
+      this.sdk = null;
+      this.isInitialized = true;
     }
   }
 
+  public isAvailable(): boolean {
+    return this.isInitialized && this.sdk !== null;
+  }
+
   public isCrazyGames(): boolean {
-    return this.sdk !== null;
+    return this.isAvailable();
   }
 
   public getUsername(): string | null {
@@ -67,7 +86,7 @@ class CrazyGamesService {
   }
 
   public updateRoom(roomId: string | null, isJoinable: boolean): void {
-    if (!roomId || !this.sdk?.game?.updateRoom) return;
+    if (!roomId || !this.isAvailable() || !this.sdk?.game?.updateRoom) return;
     try {
       console.log(`[CrazyGames] updateRoom -> roomId=${roomId}, isJoinable=${isJoinable}`);
       this.sdk.game.updateRoom({ roomId, isJoinable });
@@ -77,7 +96,7 @@ class CrazyGamesService {
   }
 
   public createInviteLink(roomCode: string): string {
-    if (this.sdk?.game?.inviteLink) {
+    if (this.isAvailable() && this.sdk?.game?.inviteLink) {
       try {
         return this.sdk.game.inviteLink({ room: roomCode });
       } catch {}
@@ -92,10 +111,12 @@ class CrazyGamesService {
   }
 
   public getInviteRoomCode(): string | null {
-    // 1. Check CrazyGames SDK data module
-    if (this.sdk?.data?.getInviteParam) {
-      const param = this.sdk.data.getInviteParam('room') || this.sdk.data.getInviteParam('roomId');
-      if (param) return param.trim().toUpperCase();
+    // 1. Check CrazyGames SDK data module if available
+    if (this.isAvailable() && this.sdk?.data?.getInviteParam) {
+      try {
+        const param = this.sdk.data.getInviteParam('room') || this.sdk.data.getInviteParam('roomId');
+        if (param) return param.trim().toUpperCase();
+      } catch {}
     }
 
     // 2. Check URL query parameters (?room=CODE or ?invite=CODE)
@@ -109,7 +130,7 @@ class CrazyGamesService {
   }
 
   public isInstantMultiplayer(): boolean {
-    if (this.sdk?.data?.isInstantMultiplayer) {
+    if (this.isAvailable() && this.sdk?.data?.isInstantMultiplayer) {
       try {
         return this.sdk.data.isInstantMultiplayer();
       } catch {}
@@ -130,19 +151,65 @@ class CrazyGamesService {
   }
 
   public gameplayStart(): void {
-    if (this.sdk?.game?.gameplayStart) {
+    if (this.isAvailable() && this.sdk?.game?.gameplayStart) {
       try {
         this.sdk.game.gameplayStart();
-      } catch {}
+      } catch (err) {
+        console.warn('[CrazyGames] gameplayStart error:', err);
+      }
     }
   }
 
   public gameplayStop(): void {
-    if (this.sdk?.game?.gameplayStop) {
+    if (this.isAvailable() && this.sdk?.game?.gameplayStop) {
       try {
         this.sdk.game.gameplayStop();
-      } catch {}
+      } catch (err) {
+        console.warn('[CrazyGames] gameplayStop error:', err);
+      }
     }
+  }
+
+  public loadingStart(): void {
+    if (this.isAvailable() && this.sdk?.game?.loadingStart) {
+      try {
+        this.sdk.game.loadingStart();
+      } catch (err) {
+        console.warn('[CrazyGames] loadingStart error:', err);
+      }
+    }
+  }
+
+  public loadingStop(): void {
+    if (this.isAvailable() && this.sdk?.game?.loadingStop) {
+      try {
+        this.sdk.game.loadingStop();
+      } catch (err) {
+        console.warn('[CrazyGames] loadingStop error:', err);
+      }
+    }
+  }
+
+  public async requestAd(adType: 'midgame' | 'rewarded' = 'midgame'): Promise<void> {
+    if (!this.isAvailable() || !this.sdk?.ad?.requestAd) return;
+    return new Promise((resolve) => {
+      try {
+        this.sdk!.ad!.requestAd(adType, {
+          adStarted: () => console.log(`[CrazyGames] ${adType} ad started`),
+          adFinished: () => {
+            console.log(`[CrazyGames] ${adType} ad finished`);
+            resolve();
+          },
+          adError: (error) => {
+            console.warn(`[CrazyGames] ${adType} ad error:`, error);
+            resolve();
+          },
+        });
+      } catch (err) {
+        console.warn(`[CrazyGames] ${adType} ad exception:`, err);
+        resolve();
+      }
+    });
   }
 
   public getSettings(): CrazyGamesSettings {
